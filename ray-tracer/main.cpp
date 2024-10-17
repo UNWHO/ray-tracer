@@ -7,12 +7,15 @@
 
 int main(int, char**)
 {
+	const int WIDTH = 1280;
+	const int HEIGHT = 720;
+
 	Window& window = Window::getInstance();
-	window.Init();
+	window.Init(WIDTH, HEIGHT);
 
 	// Initialize Direct3D
 	Graphic& graphic = Graphic::getInstance();
-	if (graphic.Init(window.GetHandle()) == false) {
+	if (graphic.Init(window.GetHandle(), window.GetWidth(), window.GetHeight()) == false) {
 		graphic.Destory();
 		window.Destroy();
 

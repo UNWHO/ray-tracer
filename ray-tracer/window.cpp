@@ -1,6 +1,10 @@
 #include "window.h"
 
-void Window::Init() {
+void Window::Init(const int width,const int height) {
+	width_ = width;
+	height_ = height;
+	done_ = false;
+	
 	wc_ = {
 		sizeof(wc_),
 		CS_CLASSDC,
@@ -17,13 +21,10 @@ void Window::Init() {
 	};
 	RegisterClassExW(&wc_);
 
-	hwnd_ = CreateWindowW(wc_.lpszClassName, L"Ray Tracer", WS_OVERLAPPEDWINDOW, 100, 100, 1280, 720, nullptr, nullptr, wc_.hInstance, nullptr);
+	hwnd_ = CreateWindowW(wc_.lpszClassName, L"Ray Tracer", WS_OVERLAPPEDWINDOW, 100, 100, width_, height_, nullptr, nullptr, wc_.hInstance, nullptr);
 
 	ShowWindow(hwnd_, SW_SHOWDEFAULT);
 	UpdateWindow(hwnd_);
-
-
-	done_ = false;
 }
 
 bool Window::HandleMessage() {

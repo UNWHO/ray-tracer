@@ -9,6 +9,9 @@ private:
 	Graphic& operator=(const Graphic&) {};
 	~Graphic() {};
 
+	bool InitBuffers();
+	bool InitShaders();
+
 	void CreateRenderTarget();
 	void CleanupRenderTarget();
 
@@ -17,13 +20,28 @@ private:
 	IDXGISwapChain* swap_chain_;
 	ID3D11RenderTargetView* render_target_view_;
 
+	ID3D11Buffer* vertex_buffer_;
+	UINT vertex_buffer_stride_;
+	UINT vertex_buffer_offset_;
+
+	ID3D11Buffer* index_buffer_;
+	UINT index_count_;
+
+	ID3D11InputLayout* input_layout_;
+
+	ID3D11VertexShader* vertex_shader_;
+	ID3D11PixelShader* pixel_shader_;
+
+	D3D11_VIEWPORT viewport_;
+
+
 public:
 	static Graphic& getInstance() {
 		static Graphic d3d11;
 		return d3d11;
 	}
 
-	bool Init(HWND hWnd);
+	bool Init(HWND hWnd, int widht, int height);
 	void Destory();
 
 	void Resize(UINT width, UINT height);
