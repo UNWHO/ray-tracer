@@ -1,10 +1,7 @@
-#include "imgui.h"
-#include "imgui_impl_win32.h"
-#include "imgui_impl_dx11.h"
-#include <d3d11.h>
 #include <tchar.h>
 
 #include "graphic.h"
+#include "ui.h"
 
 // Forward declarations of helper functions
 
@@ -20,32 +17,18 @@ int main(int, char**)
 	HWND hwnd = ::CreateWindowW(wc.lpszClassName, L"Dear ImGui DirectX11 Example", WS_OVERLAPPEDWINDOW, 100, 100, 1280, 720, nullptr, nullptr, wc.hInstance, nullptr);
 
 	// Initialize Direct3D
-	Graphic* graphic = Graphic::getInstance();
-	if (graphic->Init(hwnd) == false) {
-		graphic->Destory();
+	Graphic& graphic = Graphic::getInstance();
+	if (graphic.Init(hwnd) == false) {
+		graphic.Destory();
 		::UnregisterClassW(wc.lpszClassName, wc.hInstance);
 		return 1;
 	}
 
-
-	// Show the window
 	::ShowWindow(hwnd, SW_SHOWDEFAULT);
 	::UpdateWindow(hwnd);
 
-	// Setup Dear ImGui context
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO(); (void)io;
-	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-
-	// Setup Dear ImGui style
-	ImGui::StyleColorsDark();
-	//ImGui::StyleColorsLight();
-
-	// Setup Platform/Renderer backends
-	ImGui_ImplWin32_Init(hwnd);
-	ImGui_ImplDX11_Init(graphic->GetDevice(), graphic->GetDeviceContext());
+	UI& ui = UI::getInstance();
+	ui.Init(hwnd, graphic);
 
 
 	// Our state
@@ -69,32 +52,20 @@ int main(int, char**)
 			break;
 
 
-		// Start the Dear ImGui frame
-		ImGui_ImplDX11_NewFrame();
-		ImGui_ImplWin32_NewFrame();
-		ImGui::NewFrame();
-
-		ImGui::Begin("Options");                         
-		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-		ImGui::End();
-		ImGui::Render();
+		ui.Update();
 
 		// Rendering
-		graphic->Render(clear_color);
-		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+		graphic.Render(clear_color);
+		ui.Render();
 
 		// Present
-		graphic->Present();
-		//HRESULT hr = g_pSwapChain->Present(1, 0);   // Present with vsync
-		//HRESULT hr = g_pSwapChain->Present(0, 0); // Present without vsync
+		graphic.Present();
 	}
 
 	// Cleanup
-	ImGui_ImplDX11_Shutdown();
-	ImGui_ImplWin32_Shutdown();
-	ImGui::DestroyContext();
+	ui.Destory();
+	graphic.Destory();
 
-	graphic->Destory();
 	::DestroyWindow(hwnd);
 	::UnregisterClassW(wc.lpszClassName, wc.hInstance);
 

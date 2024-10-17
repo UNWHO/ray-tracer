@@ -25,9 +25,15 @@
     <ClCompile Include="graphic.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ui.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="graphic.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ui.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

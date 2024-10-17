@@ -5,10 +5,10 @@ class Graphic
 {
 private:
 	Graphic() : device_(nullptr), device_context_(nullptr), swap_chain_(nullptr), render_target_view_(nullptr) {};
-	Graphic(const Graphic& ref): device_(nullptr), device_context_(nullptr), swap_chain_(nullptr), render_target_view_(nullptr) {};
-	Graphic& operator=(const Graphic& ref) {};
+	Graphic(const Graphic&) : device_(nullptr), device_context_(nullptr), swap_chain_(nullptr), render_target_view_(nullptr) {};
+	Graphic& operator=(const Graphic&) {};
 	~Graphic() {};
-	
+
 	void CreateRenderTarget();
 	void CleanupRenderTarget();
 
@@ -17,10 +17,10 @@ private:
 	IDXGISwapChain* swap_chain_;
 	ID3D11RenderTargetView* render_target_view_;
 
-public: 
-	static Graphic* getInstance() {
+public:
+	static Graphic& getInstance() {
 		static Graphic d3d11;
-		return &d3d11;
+		return d3d11;
 	}
 
 	bool Init(HWND hWnd);
@@ -30,7 +30,7 @@ public:
 	void Render(const float clear_color[4]);
 	void Present();
 
-	ID3D11Device* GetDevice() { return device_; };
-	ID3D11DeviceContext* GetDeviceContext() { return device_context_; };
+	ID3D11Device* GetDevice() const { return device_; };
+	ID3D11DeviceContext* GetDeviceContext() const { return device_context_; };
 };
 
