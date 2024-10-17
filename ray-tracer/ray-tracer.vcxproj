@@ -135,7 +135,11 @@
     <None Include="..\vcpkg.json" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="graphic.cpp" />
     <ClCompile Include="main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="graphic.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
