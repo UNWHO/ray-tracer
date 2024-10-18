@@ -16,7 +16,12 @@ const std::vector<Math::Color>& Scene::Render() {
 	// Use DirectXMath to make left-handed coordinates
 	const Math::Matrix world_matrix = DirectX::XMMatrixLookAtLH(camera_.pos, camera_.forward, camera_.up);
 
-	#pragma omp parallel for collapse(3) 
+	const float ambient_coef = 0.2f;
+	const float diffuse_coef = 0.4f;
+	const float specular_coef = 0.4f;
+	const int specular_n = 10;
+
+	//#pragma omp parallel for collapse(3) 
 	for (int i = 0; i < camera_.resolution.height; i++) {
 		for (int j = 0; j < camera_.resolution.width; j++) {
 			Math::Vector3 viewplane_pixel = Math::Vector3(j + 0.5f - camera_.resolution.width / 2.0f, i + 0.5f - camera_.resolution.height / 2.0f, camera_.viewplane_distance);
@@ -49,7 +54,30 @@ const std::vector<Math::Color>& Scene::Render() {
 			}
 
 			Math::Vector3 point = camera_.pos + ray_dir * t;
-			frame_buffer_[i * camera_.resolution.width + j] = nearest_sphere->GetColor();
+			
+			Math::Vector3 N = point - nearest_sphere->GetPosition();
+			N.Normalize();
+			Math::Vector3 L = light_.pos - point;
+			L.Normalize();
+			const float diffuse = diffuse_coef * std::max<float>(N.Dot(L), 0.0f);
+		
+			Math::Vector3 V = -ray_dir;
+			V.Normalize();
+			Math::Vector3 R = (2.0f * N.Dot(L)) * N - L;
+			R.Normalize();
+			const float specular = specular_coef * std::powf(std::max<float>(V.Dot(R), 0.0f), specular_n);
+
+			Math::Color color = 
+				ambient_coef * nearest_sphere->GetColor()
+				+ diffuse * light_.color
+				+ specular * light_.color;
+
+			color.x = std::min<float>(color.x, 1.0f);
+			color.y = std::min<float>(color.y, 1.0f);
+			color.z = std::min<float>(color.z, 1.0f);
+			color.w = 1.0f;
+
+			frame_buffer_[i * camera_.resolution.width + j] = color;
 		}
 	}
 

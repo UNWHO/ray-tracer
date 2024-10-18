@@ -18,7 +18,9 @@ private:
 public:
 	Sphere(const Math::Vector3& pos, const Math::Color& color, const float radius) : pos_(pos), color_(color), radius_(radius), radius_square_(radius* radius) {};
 
+	const Math::Vector3& GetPosition() const { return pos_; };
 	const Math::Color& GetColor() const { return color_; };
+
 
 	bool IsInside(const Math::Vector3 point) const {
 		Math::Vector3 vec = point - pos_;

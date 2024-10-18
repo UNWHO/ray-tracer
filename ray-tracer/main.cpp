@@ -37,6 +37,9 @@ int main(int, char**)
 	scene.SetCameraResolution(WIDTH, HEIGHT);
 	scene.SetCameraFoV(90.0f);
 
+	scene.SetLightPosition(Math::Vector3(0.0f, -500.0f, WIDTH * 0.7f));
+	scene.SetLightColor(Math::Color(1.0f, 1.0f, 1.0f, 1.0f));
+
 	scene.AddSphere(Sphere(Math::Vector3(0.0f, 0.0f, WIDTH), Math::Color(1.0f, 0.0f, 0.0f, 1.0f), 100.0f));
 	scene.AddSphere(Sphere(Math::Vector3(50.0f, 0.0f, WIDTH + 50), Math::Color(0.0f, 1.0f, 0.0f, 1.0f), 100.0f));
 

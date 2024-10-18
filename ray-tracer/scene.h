@@ -15,10 +15,17 @@ struct Camera {
 	} resolution;
 };
 
+struct PointLight {
+	Math::Vector3 pos;
+	Math::Color color;
+};
+
 class Scene
 {
 private:
 	Camera camera_;
+	PointLight light_;
+
 	std::vector<Sphere> spheres_;
 
 	std::vector<Math::Color> frame_buffer_;
@@ -39,7 +46,8 @@ public:
 		frame_buffer_.resize(width * height);
 	}
 
-
+	void SetLightPosition(const Math::Vector3& pos) { light_.pos = pos; };
+	void SetLightColor(const Math::Color& color) { light_.color = color; };
 
 	void AddSphere(const Sphere& sphere) {
 		spheres_.push_back(sphere);
