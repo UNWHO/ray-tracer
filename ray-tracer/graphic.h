@@ -2,6 +2,8 @@
 #include <d3d11.h>
 #include <vector>
 
+#include "sphere.h"
+
 class Graphic
 {
 private:
@@ -43,8 +45,6 @@ private:
 
 	ID3D11Texture2D* texture_;
 	ID3D11ShaderResourceView* texture_resource_view_;
-	std::vector<float> texture_buffer_;
-
 
 public:
 	static Graphic& getInstance() {
@@ -56,7 +56,7 @@ public:
 	void Destory();
 
 	void Resize(UINT screen_width, UINT screen_height);
-	void Render(const float clear_color[4]);
+	void Render(const std::vector< Math::Color>& frame_buffer);
 	void Present();
 
 	void Debug();

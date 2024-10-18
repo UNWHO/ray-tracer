@@ -3,6 +3,7 @@
 #include "window.h"
 #include "graphic.h"
 #include "ui.h"
+#include "scene.h"
 
 
 int main(int, char**)
@@ -30,7 +31,14 @@ int main(int, char**)
 
 
 	// Our state
-	float clear_color[4] = { 0.45f, 0.55f, 0.60f, 1.00f };
+	Scene scene;
+	scene.SetCameraPosition(Math::Vector3(0.0f, 0.0f, 0.0f));
+	scene.SetCameraDirection(Math::Vector3(0.0f, 0.0f, 1.0f), Math::Vector3(0.0f, 1.0f, 0.0f));
+	scene.SetCameraResolution(WIDTH, HEIGHT);
+	scene.SetCameraFoV(90.0f);
+
+	scene.AddSphere(Sphere(Math::Vector3(0.0f, 0.0f, WIDTH), Math::Color(1.0f, 0.0f, 0.0f, 1.0f), 100.0f));
+	scene.AddSphere(Sphere(Math::Vector3(50.0f, 0.0f, WIDTH + 50), Math::Color(0.0f, 1.0f, 0.0f, 1.0f), 100.0f));
 
 
 	while (!window.isDone())
@@ -41,7 +49,7 @@ int main(int, char**)
 		ui.Update();
 
 		// Rendering
-		graphic.Render(clear_color);
+		graphic.Render(scene.Render());
 		ui.Render();
 
 		// Present

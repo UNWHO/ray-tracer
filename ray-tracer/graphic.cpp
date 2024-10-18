@@ -5,6 +5,7 @@
 #include <system_error>
 
 
+
 bool Graphic::Init(HWND hWnd, const unsigned int screen_width, const unsigned int screen_height) {
 	screen_width_ = screen_width;
 	screen_height_ = screen_height;
@@ -135,31 +136,17 @@ void Graphic::Resize(UINT width, UINT height) {
 	CreateRenderTarget();
 }
 
-void Graphic::Render(const float clear_color[4]) {
-	const float clear_color_with_alpha[4] = { clear_color[0] * clear_color[3], clear_color[1] * clear_color[3], clear_color[2] * clear_color[3], clear_color[3] };
+void Graphic::Render(const std::vector<Math::Color>& frame_buffer) {
+
 	device_context_->OMSetRenderTargets(1, &render_target_view_, nullptr);
-	device_context_->ClearRenderTargetView(render_target_view_, clear_color_with_alpha);
-
-	// draw circle
-	for (int i = 0; i < screen_height_; i++) {
-		for (int j = 0; j < screen_width_; j++) {
-			if ((i - 100) * (i - 100) + (j - 100) * (j - 100) < 1000) {
-				int k = i * screen_width_ * 4 + j * 4;
-
-				texture_buffer_[k + 0] = 1.0f;
-				texture_buffer_[k + 1] = 0.0f;
-				texture_buffer_[k + 2] = 0.0f;
-				texture_buffer_[k + 3] = 1.0f;
-			}
-		}
-	}
+	//device_context_->ClearRenderTargetView(render_target_view_, clear_color_with_alpha);
 
 	D3D11_MAPPED_SUBRESOURCE mapped_resource;
 	ZeroMemory(&mapped_resource, sizeof(D3D11_MAPPED_SUBRESOURCE));
-	
+
 
 	device_context_->Map(texture_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
-	memcpy(mapped_resource.pData, texture_buffer_.data(), sizeof(float) * texture_buffer_.size());
+	memcpy(mapped_resource.pData, frame_buffer.data(), sizeof(Math::Color) * frame_buffer.size());
 	device_context_->Unmap(texture_, 0);
 
 	device_context_->DrawIndexed(index_count_, 0, 0);
@@ -277,8 +264,6 @@ bool Graphic::InitShaders() {
 }
 
 bool Graphic::InitTexture() {
-	texture_buffer_.resize(screen_width_ * screen_height_ * 4);
-
 	D3D11_TEXTURE2D_DESC texture_desc;
 	texture_desc.Width = screen_width_;
 	texture_desc.Height = screen_height_;
@@ -333,7 +318,7 @@ void Graphic::CleanupRenderTarget()
 void Graphic::Debug() {
 	ID3D11InfoQueue* debug_info_queue;
 	device_->QueryInterface(__uuidof(ID3D11InfoQueue), (void**)&debug_info_queue);
-	
+
 	UINT64 message_count = debug_info_queue->GetNumStoredMessages();
 
 	for (UINT64 i = 0; i < message_count; i++) {
@@ -342,8 +327,8 @@ void Graphic::Debug() {
 
 		D3D11_MESSAGE* message = (D3D11_MESSAGE*)malloc(message_size); //allocate enough space
 		debug_info_queue->GetMessage(i, message, &message_size); //get the actual message
-	
-		printf("Directx11: %.*s\n", message->DescriptionByteLength, message->pDescription);
+
+		printf("Directx11: %.*s\n", static_cast<int>(message->DescriptionByteLength), message->pDescription);
 
 		free(message);
 	}
