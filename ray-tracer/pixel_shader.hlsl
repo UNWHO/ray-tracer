@@ -1,4 +1,6 @@
-float4 main() : SV_TARGET
+Texture2D tex;
+
+float4 main(float4 pos: SV_Position) : SV_TARGET
 {
-	return float4(1.0f, 1.0f, 1.0f, 1.0f);
+    return tex.Load(int3(pos.xy, 0));
 }

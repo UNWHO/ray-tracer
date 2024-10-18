@@ -1,14 +1,21 @@
 #include "graphic.h"
 
+#include <iostream>
 #include <d3dcompiler.h>
+#include <system_error>
 
-bool Graphic::Init(HWND hWnd, const int width, const int height) {
+
+bool Graphic::Init(HWND hWnd, const unsigned int screen_width, const unsigned int screen_height) {
+	screen_width_ = screen_width;
+	screen_height_ = screen_height;
+
+
 	// Setup swap chain
 	DXGI_SWAP_CHAIN_DESC descriptor;
 	ZeroMemory(&descriptor, sizeof(descriptor));
 	descriptor.BufferCount = 2;
-	descriptor.BufferDesc.Width = width;
-	descriptor.BufferDesc.Height = height;
+	descriptor.BufferDesc.Width = screen_width_;
+	descriptor.BufferDesc.Height = screen_height_;
 	descriptor.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	descriptor.BufferDesc.RefreshRate.Numerator = 60;
 	descriptor.BufferDesc.RefreshRate.Denominator = 1;
@@ -21,7 +28,11 @@ bool Graphic::Init(HWND hWnd, const int width, const int height) {
 	descriptor.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 
 	UINT create_device_flags = 0;
-	//create_device_flags |= D3D11_CREATE_DEVICE_DEBUG;
+#ifdef _DEBUG
+	create_device_flags |= D3D11_CREATE_DEVICE_DEBUG;
+#endif
+
+
 	D3D_FEATURE_LEVEL feature_level;
 	const D3D_FEATURE_LEVEL feature_levels[2] = { D3D_FEATURE_LEVEL_11_0, D3D_FEATURE_LEVEL_10_0, };
 	HRESULT res = D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, create_device_flags, feature_levels, 2, D3D11_SDK_VERSION, &descriptor, &swap_chain_, &device_, &feature_level, &device_context_);
@@ -35,11 +46,19 @@ bool Graphic::Init(HWND hWnd, const int width, const int height) {
 	ZeroMemory(&viewport_, sizeof(viewport_));
 	viewport_.TopLeftX = 0;
 	viewport_.TopLeftY = 0;
-	viewport_.Width = width;
-	viewport_.Height = height;
+	viewport_.Width = static_cast<float>(screen_width_);
+	viewport_.Height = static_cast<float>(screen_height_);
 	viewport_.MinDepth = 0.0f;
 	viewport_.MaxDepth = 1.0f;
 	device_context_->RSSetViewports(1, &viewport_);
+
+
+	if (InitTexture() == false) {
+		std::cout << "Failed to init textures" << std::endl;
+		return false;
+	}
+	device_context_->PSSetShaderResources(0, 1, &texture_resource_view_);
+
 
 	if (InitBuffers() == false) {
 		return false;
@@ -95,11 +114,24 @@ void Graphic::Destory() {
 		pixel_shader_->Release();
 		pixel_shader_ = nullptr;
 	}
+
+	if (texture_) {
+		texture_->Release();
+		texture_ = nullptr;
+	}
+
+	if (texture_resource_view_) {
+		texture_resource_view_->Release();
+		texture_resource_view_ = nullptr;
+	}
 }
 
 void Graphic::Resize(UINT width, UINT height) {
 	CleanupRenderTarget();
 	swap_chain_->ResizeBuffers(0, width, height, DXGI_FORMAT_UNKNOWN, 0);
+
+	// TODO: resize texture 
+
 	CreateRenderTarget();
 }
 
@@ -108,13 +140,27 @@ void Graphic::Render(const float clear_color[4]) {
 	device_context_->OMSetRenderTargets(1, &render_target_view_, nullptr);
 	device_context_->ClearRenderTargetView(render_target_view_, clear_color_with_alpha);
 
-	//device_context_->IASetVertexBuffers(0, 1, &vertex_buffer_, &vertex_buffer_stride_, &vertex_buffer_offset_);
-	//device_context_->IASetIndexBuffer(index_buffer_, DXGI_FORMAT_R32_UINT, 0);
-	//device_context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	//
-	//device_context_->VSSetShader(vertex_shader_, NULL, 0);
-	//device_context_->PSSetShader(pixel_shader_, NULL, 0);
-	//device_context_->IASetInputLayout(input_layout_);
+	// draw circle
+	for (int i = 0; i < screen_height_; i++) {
+		for (int j = 0; j < screen_width_; j++) {
+			if ((i - 100) * (i - 100) + (j - 100) * (j - 100) < 1000) {
+				int k = i * screen_width_ * 4 + j * 4;
+
+				texture_buffer_[k + 0] = 1.0f;
+				texture_buffer_[k + 1] = 0.0f;
+				texture_buffer_[k + 2] = 0.0f;
+				texture_buffer_[k + 3] = 1.0f;
+			}
+		}
+	}
+
+	D3D11_MAPPED_SUBRESOURCE mapped_resource;
+	ZeroMemory(&mapped_resource, sizeof(D3D11_MAPPED_SUBRESOURCE));
+	
+
+	device_context_->Map(texture_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
+	memcpy(mapped_resource.pData, texture_buffer_.data(), sizeof(float) * texture_buffer_.size());
+	device_context_->Unmap(texture_, 0);
 
 	device_context_->DrawIndexed(index_count_, 0, 0);
 }
@@ -126,10 +172,25 @@ void Graphic::Present() {
 
 bool Graphic::InitBuffers() {
 	const float vertices[][4] = {
-		{ -1.0f, -1.0f, 0.0f, 1.0f }, // TOP LEFT 
-		{ -1.0f, 1.0f, 0.0f, 1.0f }, // BOTTOM LEFT
-		{ 1.0f, 1.0f, 0.0f, 1.0f }, // BOTTOM RIGHT
-		{ 1.0f, -1.0f, 0.0f, 1.0f }, // TOP RIGHT
+		// LEFT TOP 
+		{
+			-1.0f, -1.0f, 0.0f, 1.0f,
+		},
+
+		// LEFT BOTTOM
+		{
+			-1.0f, 1.0f, 0.0f, 1.0f,
+		},
+
+		// RIGHT BOTTOM 
+		{
+			1.0f, 1.0f, 0.0f, 1.0f,
+		},
+
+		// RIGHT TOP 
+		{
+			1.0f, -1.0f, 0.0f, 1.0f,
+		},
 	};
 	vertex_buffer_stride_ = sizeof(float) * 4;
 	vertex_buffer_offset_ = 0;
@@ -211,7 +272,45 @@ bool Graphic::InitShaders() {
 	};
 
 	device_->CreateInputLayout(input_elem_desc, 1, vs_blob->GetBufferPointer(), vs_blob->GetBufferSize(), &input_layout_);
-	
+
+	return true;
+}
+
+bool Graphic::InitTexture() {
+	texture_buffer_.resize(screen_width_ * screen_height_ * 4);
+
+	D3D11_TEXTURE2D_DESC texture_desc;
+	texture_desc.Width = screen_width_;
+	texture_desc.Height = screen_height_;
+	texture_desc.MipLevels = 1;
+	texture_desc.ArraySize = 1;
+	texture_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+	texture_desc.SampleDesc.Count = 1;
+	texture_desc.SampleDesc.Quality = 0;
+	texture_desc.Usage = D3D11_USAGE_DYNAMIC;
+	texture_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+	texture_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	texture_desc.MiscFlags = 0;
+
+
+	texture_ = NULL;
+	HRESULT result = device_->CreateTexture2D(&texture_desc, NULL, &texture_);
+	if (FAILED(result)) {
+		Debug();
+		return false;
+	}
+
+	D3D11_SHADER_RESOURCE_VIEW_DESC resource_view_desc;
+	resource_view_desc.Format = texture_desc.Format;
+	resource_view_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	resource_view_desc.Texture2D.MostDetailedMip = 0;
+	resource_view_desc.Texture2D.MipLevels = 1;
+
+	result = device_->CreateShaderResourceView(texture_, &resource_view_desc, &texture_resource_view_);
+	if (FAILED(result)) {
+		return false;
+	}
+
 	return true;
 }
 
@@ -229,4 +328,25 @@ void Graphic::CleanupRenderTarget()
 		render_target_view_->Release();
 		render_target_view_ = nullptr;
 	}
+}
+
+void Graphic::Debug() {
+	ID3D11InfoQueue* debug_info_queue;
+	device_->QueryInterface(__uuidof(ID3D11InfoQueue), (void**)&debug_info_queue);
+	
+	UINT64 message_count = debug_info_queue->GetNumStoredMessages();
+
+	for (UINT64 i = 0; i < message_count; i++) {
+		SIZE_T message_size = 0;
+		debug_info_queue->GetMessage(i, nullptr, &message_size); //get the size of the message
+
+		D3D11_MESSAGE* message = (D3D11_MESSAGE*)malloc(message_size); //allocate enough space
+		debug_info_queue->GetMessage(i, message, &message_size); //get the actual message
+	
+		printf("Directx11: %.*s\n", message->DescriptionByteLength, message->pDescription);
+
+		free(message);
+	}
+
+	debug_info_queue->ClearStoredMessages();
 }

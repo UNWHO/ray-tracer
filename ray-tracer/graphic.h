@@ -1,5 +1,6 @@
 #pragma once
 #include <d3d11.h>
+#include <vector>
 
 class Graphic
 {
@@ -11,9 +12,15 @@ private:
 
 	bool InitBuffers();
 	bool InitShaders();
+	bool InitTexture();
 
 	void CreateRenderTarget();
 	void CleanupRenderTarget();
+
+	
+
+	unsigned int screen_width_;
+	unsigned int screen_height_;
 
 	ID3D11Device* device_;
 	ID3D11DeviceContext* device_context_;
@@ -34,6 +41,10 @@ private:
 
 	D3D11_VIEWPORT viewport_;
 
+	ID3D11Texture2D* texture_;
+	ID3D11ShaderResourceView* texture_resource_view_;
+	std::vector<float> texture_buffer_;
+
 
 public:
 	static Graphic& getInstance() {
@@ -41,12 +52,14 @@ public:
 		return d3d11;
 	}
 
-	bool Init(HWND hWnd, int widht, int height);
+	bool Init(HWND hWnd, unsigned int screen_width, unsigned int screen_height);
 	void Destory();
 
-	void Resize(UINT width, UINT height);
+	void Resize(UINT screen_width, UINT screen_height);
 	void Render(const float clear_color[4]);
 	void Present();
+
+	void Debug();
 
 	ID3D11Device* GetDevice() const { return device_; };
 	ID3D11DeviceContext* GetDeviceContext() const { return device_context_; };

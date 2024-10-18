@@ -16,6 +16,9 @@ int main(int, char**)
 	// Initialize Direct3D
 	Graphic& graphic = Graphic::getInstance();
 	if (graphic.Init(window.GetHandle(), window.GetWidth(), window.GetHeight()) == false) {
+#ifdef _DEBUG
+		graphic.Debug();
+#endif
 		graphic.Destory();
 		window.Destroy();
 
