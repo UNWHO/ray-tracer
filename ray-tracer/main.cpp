@@ -5,6 +5,8 @@
 #include "ui.h"
 #include "scene.h"
 
+#include <iostream>
+
 
 int main(int, char**)
 {
@@ -29,8 +31,11 @@ int main(int, char**)
 	UI& ui = UI::getInstance();
 	ui.Init(window.GetHandle(), graphic);
 
+	// state
+	State state;
+	state.sphere = nullptr;
 
-	// Our state
+	// setup scene
 	Scene scene;
 	scene.SetCameraPosition(Math::Vector3(0.0f, 0.0f, 0.0f));
 	scene.SetCameraDirection(Math::Vector3(0.0f, 0.0f, 1.0f), Math::Vector3(0.0f, 1.0f, 0.0f));
@@ -40,16 +45,25 @@ int main(int, char**)
 	scene.SetLightPosition(Math::Vector3(0.0f, -500.0f, WIDTH * 0.7f));
 	scene.SetLightColor(Math::Color(1.0f, 1.0f, 1.0f, 1.0f));
 
-	scene.AddSphere(Sphere(Math::Vector3(0.0f, 0.0f, WIDTH), Math::Color(1.0f, 0.0f, 0.0f, 1.0f), 100.0f));
+
+	Sphere sphere(Math::Vector3(0.0f, 0.0f, WIDTH), Math::Color(1.0f, 0.0f, 0.0f, 1.0f), 100.0f);
+	sphere.SetPhongParameter(0.2f, 0.4f, 0.4f, 10);
+	scene.AddSphere(sphere);
 	scene.AddSphere(Sphere(Math::Vector3(50.0f, 0.0f, WIDTH + 50), Math::Color(0.0f, 1.0f, 0.0f, 1.0f), 100.0f));
+
+
+	// setup listneres
+	window.AddKeydownListener([](int keyCode) {std::cout << keyCode << std::endl; });
+	window.AddMouseLeftClickListener([&state, &scene](const int x, const int y) {
+		state.sphere = scene.PeekSphere(x, y);
+	});
 
 
 	while (!window.isDone())
 	{
 		window.HandleMessage();
 
-
-		ui.Update();
+		ui.Update(state);
 
 		// Rendering
 		graphic.Render(scene.Render());
@@ -64,6 +78,6 @@ int main(int, char**)
 	graphic.Destory();
 	window.Destroy();
 
-	
+
 	return 0;
 }

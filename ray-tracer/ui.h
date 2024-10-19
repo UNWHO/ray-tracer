@@ -5,6 +5,15 @@
 
 #include "graphic.h"
 
+struct State {
+	struct {
+		float pos[3];
+		float color[4];
+	} light;
+
+	Sphere* sphere;
+};
+
 class UI
 {
 private:
@@ -24,7 +33,7 @@ public:
 	void Init(HWND hWnd, const Graphic& graphic);
 	void Destory();
 
-	void Update();
+	void Update(State& state);
 	void Render();
 };
 

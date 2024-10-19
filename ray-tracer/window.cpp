@@ -1,10 +1,16 @@
 #include "window.h"
 
+#include "WindowsX.h"
+
 void Window::Init(const int width,const int height) {
 	width_ = width;
 	height_ = height;
 	done_ = false;
-	
+
+	DWORD dwStyle = WS_OVERLAPPEDWINDOW & ~WS_MAXIMIZEBOX & ~WS_MINIMIZEBOX | WS_VISIBLE;
+	RECT windowRect = { 0, 0, width, height };
+	AdjustWindowRectEx(&windowRect, dwStyle, FALSE, 0);
+
 	wc_ = {
 		sizeof(wc_),
 		CS_CLASSDC,
@@ -21,7 +27,7 @@ void Window::Init(const int width,const int height) {
 	};
 	RegisterClassExW(&wc_);
 
-	hwnd_ = CreateWindowW(wc_.lpszClassName, L"Ray Tracer", WS_OVERLAPPEDWINDOW, 100, 100, width_, height_, nullptr, nullptr, wc_.hInstance, nullptr);
+	hwnd_ = CreateWindowW(wc_.lpszClassName, L"Ray Tracer", WS_OVERLAPPEDWINDOW, 100, 100, windowRect.right - windowRect.left, windowRect.bottom - windowRect.top, nullptr, nullptr, wc_.hInstance, nullptr);
 
 	ShowWindow(hwnd_, SW_SHOWDEFAULT);
 	UpdateWindow(hwnd_);
@@ -60,6 +66,8 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
 		return true;
 
+
+	Window& window = Window::getInstance();
 	switch (msg)
 	{
 	case WM_SIZE:
@@ -74,6 +82,19 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_DESTROY:
 		::PostQuitMessage(0);
 		return 0;
+
+	case WM_LBUTTONDOWN:
+		if (ImGui::GetIO().WantCaptureMouse) {
+			return 0;
+		}
+
+		window.OnMouseLeftClick(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+		return 0;
+
+	case WM_KEYDOWN:
+		window.OnKeyDown(wParam);
+		return 0;
+
 	}
 	return ::DefWindowProcW(hWnd, msg, wParam, lParam);
 }

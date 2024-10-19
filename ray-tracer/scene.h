@@ -29,6 +29,7 @@ private:
 	std::vector<Sphere> spheres_;
 
 	std::vector<Math::Color> frame_buffer_;
+	std::vector<Sphere*> nearest_spheres_;
 
 public:
 	void SetCameraPosition(const Math::Vector3& pos) { camera_.pos = pos; };
@@ -43,7 +44,12 @@ public:
 	void SetCameraResolution(const unsigned int width, const unsigned int height) {
 		camera_.resolution.width = width;
 		camera_.resolution.height = height;
+
 		frame_buffer_.resize(width * height);
+		nearest_spheres_.resize(width * height);
+	}
+	Sphere* PeekSphere(int x, int y) {
+		return nearest_spheres_[y * camera_.resolution.width + x];
 	}
 
 	void SetLightPosition(const Math::Vector3& pos) { light_.pos = pos; };
